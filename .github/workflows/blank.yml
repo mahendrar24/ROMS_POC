@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -29,20 +29,38 @@ jobs:
 
       - name: Run JMeter Test
         run: |
+          rm -rf report
           mkdir -p report
+
           jmeter \
-          -n \
-          -t ROMS.jmx \
-          -l results.jtl \
-          -e \
-          -o report
+            -n \
+            -t ROMS.jmx \
+            -l results.jtl \
+            -e \
+            -o report
+
+      - name: Verify Generated Files
+        if: always()
+        run: |
+          echo "Current Directory:"
+          pwd
+
+          echo "Workspace Contents:"
+          ls -la
+
+          echo "Results File:"
+          ls -la results.jtl || true
+
+          echo "Report Directory:"
+          ls -la report || true
 
       - name: Upload HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jmeter-html-report
-          path: report/
+          path: report
+          if-no-files-found: warn
 
       - name: Upload JTL Results
         if: always()
@@ -50,3 +68,4 @@ jobs:
         with:
           name: jmeter-jtl-results
           path: results.jtl
+          if-no-files-found: warn
